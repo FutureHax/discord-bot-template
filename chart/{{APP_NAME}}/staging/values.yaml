@@ -1,0 +1,72 @@
+# Staging environment values
+
+environment: staging
+logLevel: info
+
+# Service Account
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: "{{APP_NAME}}-staging@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Bot
+bot:
+  replicaCount: 1
+  image:
+    tag: "" # Use release tag
+  autoscaling:
+    enabled: false
+
+# API
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: ""
+
+# Dashboard
+dashboard:
+  enabled: true
+  replicaCount: 1
+  hostname: "staging.{{DOMAIN}}"
+  url: "https://staging.{{DOMAIN}}"
+  apiUrl: "https://staging.{{DOMAIN}}/api"
+  image:
+    tag: ""
+
+# Gateway
+gateway:
+  enabled: true
+  clusterIssuer: letsencrypt-staging
+
+# Secrets
+secrets:
+  gsm:
+    enabled: true
+    projectId: "{{GCP_PROJECT}}"
+    secrets:
+      - gsmName: "{{APP_NAME}}-staging-discord-token"
+        secretName: "discord-token"
+        key: "DISCORD_TOKEN"
+      - gsmName: "{{APP_NAME}}-staging-database-url"
+        secretName: "database-url"
+        key: "DATABASE_URL"
+      - gsmName: "{{APP_NAME}}-staging-api-key"
+        secretName: "api-key"
+        key: "API_KEY"
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    username: "{{APP_NAME}}_staging"
+    database: "{{APP_NAME}}_staging"
+  primary:
+    persistence:
+      size: 5Gi
+
+# Redis
+redis:
+  enabled: true
+  master:
+    persistence:
+      size: 1Gi

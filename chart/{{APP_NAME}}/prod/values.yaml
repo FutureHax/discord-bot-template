@@ -1,0 +1,137 @@
+# Production environment values
+
+environment: production
+logLevel: info
+
+# Service Account
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: "{{APP_NAME}}@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Bot
+bot:
+  replicaCount: 2
+  image:
+    tag: "" # Use release tag
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: bot
+            topologyKey: kubernetes.io/hostname
+
+# API
+api:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: ""
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+# Dashboard
+dashboard:
+  enabled: true
+  replicaCount: 2
+  hostname: "{{DOMAIN}}"
+  url: "https://{{DOMAIN}}"
+  apiUrl: "https://{{DOMAIN}}/api"
+  image:
+    tag: ""
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Gateway
+gateway:
+  enabled: true
+  clusterIssuer: letsencrypt-production
+
+# Secrets
+secrets:
+  gsm:
+    enabled: true
+    projectId: "{{GCP_PROJECT}}"
+    secrets:
+      - gsmName: "{{APP_NAME}}-discord-token"
+        secretName: "discord-token"
+        key: "DISCORD_TOKEN"
+      - gsmName: "{{APP_NAME}}-database-url"
+        secretName: "database-url"
+        key: "DATABASE_URL"
+      - gsmName: "{{APP_NAME}}-api-key"
+        secretName: "api-key"
+        key: "API_KEY"
+      - gsmName: "{{APP_NAME}}-field-encryption-key"
+        secretName: "field-encryption-key"
+        key: "PRISMA_FIELD_ENCRYPTION_KEY"
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    username: "{{APP_NAME}}"
+    database: "{{APP_NAME}}"
+  primary:
+    persistence:
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+# Redis
+redis:
+  enabled: true
+  master:
+    persistence:
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi

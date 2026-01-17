@@ -1,0 +1,110 @@
+# Development environment values
+
+environment: development
+logLevel: debug
+
+# Discord development guild for instant command updates
+discord:
+  clientId: "{{DISCORD_CLIENT_ID}}"
+  guildId: "{{DISCORD_DEV_GUILD_ID}}"
+
+# Service Account
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: "{{APP_NAME}}-dev@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+
+# Bot
+bot:
+  replicaCount: 1
+  image:
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# API
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Dashboard
+dashboard:
+  enabled: true
+  replicaCount: 1
+  hostname: "dev.{{DOMAIN}}"
+  url: "https://dev.{{DOMAIN}}"
+  apiUrl: "https://dev.{{DOMAIN}}/api"
+  image:
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+# Gateway
+gateway:
+  enabled: true
+  clusterIssuer: letsencrypt-staging
+
+# Secrets
+secrets:
+  gsm:
+    enabled: true
+    projectId: "{{GCP_PROJECT}}"
+    secrets:
+      - gsmName: "{{APP_NAME}}-dev-discord-token"
+        secretName: "discord-token"
+        key: "DISCORD_TOKEN"
+      - gsmName: "{{APP_NAME}}-dev-database-url"
+        secretName: "database-url"
+        key: "DATABASE_URL"
+      - gsmName: "{{APP_NAME}}-dev-api-key"
+        secretName: "api-key"
+        key: "API_KEY"
+
+# Use smaller database for dev
+postgresql:
+  enabled: true
+  auth:
+    username: "{{APP_NAME}}_dev"
+    database: "{{APP_NAME}}_dev"
+  primary:
+    persistence:
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+# Redis
+redis:
+  enabled: true
+  master:
+    persistence:
+      size: 500Mi
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 25m
+        memory: 64Mi

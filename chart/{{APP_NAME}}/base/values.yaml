@@ -1,0 +1,239 @@
+# Base values for {{APP_TITLE}}
+# These values are shared across all environments
+
+# App configuration
+appName: "{{APP_NAME}}"
+environment: production
+logLevel: info
+
+# Image pull secrets (for private registries)
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Discord configuration
+discord:
+  clientId: "{{DISCORD_CLIENT_ID}}"
+  guildId: "" # Set for development only
+
+# Service Account
+serviceAccount:
+  create: true
+  automount: true
+  annotations:
+    iam.gke.io/gcp-service-account: "{{APP_NAME}}@{{GCP_PROJECT}}.iam.gserviceaccount.com"
+  name: ""
+
+# ============================================================================
+# Bot Service
+# ============================================================================
+bot:
+  replicaCount: 1
+
+  image:
+    repository: "{{DOCKER_REGISTRY}}/{{APP_NAME}}"
+    pullPolicy: IfNotPresent
+    tag: ""
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+  podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 1001
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ============================================================================
+# API Service
+# ============================================================================
+api:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: "{{DOCKER_REGISTRY}}/{{APP_NAME}}-api"
+    pullPolicy: IfNotPresent
+    tag: ""
+
+  service:
+    type: ClusterIP
+    port: 3001
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+  podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 1001
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+
+  nodeSelector: {}
+
+# ============================================================================
+# Dashboard
+# ============================================================================
+dashboard:
+  enabled: true
+  replicaCount: 1
+  hostname: "{{DOMAIN}}"
+  url: "https://{{DOMAIN}}"
+  apiUrl: "https://{{DOMAIN}}/api"
+
+  image:
+    repository: "{{DOCKER_REGISTRY}}/{{APP_NAME}}-dashboard"
+    pullPolicy: IfNotPresent
+    tag: ""
+
+  service:
+    type: ClusterIP
+    port: 3002
+
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+
+  podSecurityContext:
+    fsGroup: 1001
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+
+  nodeSelector: {}
+
+# ============================================================================
+# Gateway API Configuration
+# ============================================================================
+gateway:
+  enabled: true
+  className: gke-l7-global-external-managed
+  clusterIssuer: letsencrypt-production
+  externalDns:
+    enabled: true
+
+# ============================================================================
+# Secrets (Google Secret Manager)
+# ============================================================================
+secrets:
+  gsm:
+    enabled: true
+    projectId: "{{GCP_PROJECT}}"
+    secrets:
+      - gsmName: "{{APP_NAME}}-discord-token"
+        secretName: "discord-token"
+        key: "DISCORD_TOKEN"
+      - gsmName: "{{APP_NAME}}-database-url"
+        secretName: "database-url"
+        key: "DATABASE_URL"
+      - gsmName: "{{APP_NAME}}-api-key"
+        secretName: "api-key"
+        key: "API_KEY"
+
+# ============================================================================
+# PostgreSQL (Bitnami subchart)
+# ============================================================================
+postgresql:
+  enabled: true
+  auth:
+    username: "{{APP_NAME}}"
+    password: "" # Set in environment-specific values or use GSM
+    database: "{{APP_NAME}}"
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+# External database (when postgresql.enabled is false)
+externalDatabase:
+  url: ""
+
+# ============================================================================
+# Redis (Bitnami subchart)
+# ============================================================================
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "" # Set in environment-specific values or use GSM
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 250m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+# External Redis (when redis.enabled is false)
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
