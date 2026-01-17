@@ -6,7 +6,7 @@
 ARG BASE_IMAGE={{DOCKER_REGISTRY}}/{{APP_NAME}}-base:latest
 
 # Stage 1: Builder
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 
 # Install build dependencies
@@ -30,7 +30,7 @@ RUN cd commons && npx prisma generate
 # ============================================================================
 # Production dependencies only
 # ============================================================================
-FROM node:20-alpine AS prod-deps
+FROM node:25-alpine AS prod-deps
 WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
@@ -43,7 +43,7 @@ RUN npm ci --only=production && npm cache clean --force
 # ============================================================================
 # Final production image
 # ============================================================================
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 
 # Add labels
