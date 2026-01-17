@@ -4,7 +4,7 @@
 # ============================================================================
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 
 # Install build dependencies
@@ -24,7 +24,7 @@ RUN cd commons && npx prisma generate
 # ============================================================================
 # Final base image
 # ============================================================================
-FROM node:20-alpine AS base
+FROM node:25-alpine AS base
 WORKDIR /app
 
 # Add non-root user for security
