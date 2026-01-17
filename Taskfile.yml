@@ -1,0 +1,323 @@
+# Taskfile for {{APP_TITLE}}
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  APP_NAME: "{{APP_NAME}}"
+  DOCKER_REGISTRY: "{{DOCKER_REGISTRY}}"
+  GCP_PROJECT: "{{GCP_PROJECT}}"
+  K8S_NAMESPACE: "{{K8S_NAMESPACE}}"
+
+env:
+  NODE_ENV: development
+
+tasks:
+  # ============================================================================
+  # Development
+  # ============================================================================
+  default:
+    desc: "Show available tasks"
+    cmds:
+      - task --list
+
+  install:
+    desc: "Install all dependencies"
+    cmds:
+      - npm ci
+      - cd commons && npm ci
+      - cd api-service && npm ci
+      - cd dashboard && npm ci
+
+  dev:
+    desc: "Start bot in development mode"
+    cmds:
+      - npm run dev
+
+  dev:api:
+    desc: "Start API service in development mode"
+    dir: api-service
+    cmds:
+      - npm run dev
+
+  dev:dashboard:
+    desc: "Start dashboard in development mode"
+    dir: dashboard
+    cmds:
+      - npm run dev
+
+  dev:all:
+    desc: "Start all services in development mode (requires tmux or multiple terminals)"
+    deps: [dev, dev:api, dev:dashboard]
+
+  lint:
+    desc: "Run linting on all services"
+    cmds:
+      - npm run lint
+      - cd api-service && npm run lint
+      - cd dashboard && npm run lint
+
+  lint:fix:
+    desc: "Fix linting issues"
+    cmds:
+      - npm run lint:fix
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - npm run test
+
+  test:watch:
+    desc: "Run tests in watch mode"
+    cmds:
+      - npm run test:watch
+
+  # ============================================================================
+  # Database
+  # ============================================================================
+  db:generate:
+    desc: "Generate Prisma client"
+    cmds:
+      - npm run prisma:generate
+
+  db:migrate:
+    desc: "Run database migrations (development)"
+    cmds:
+      - npm run prisma:migrate
+
+  db:migrate:deploy:
+    desc: "Deploy database migrations (production)"
+    cmds:
+      - npm run prisma:migrate:deploy
+
+  db:seed:
+    desc: "Seed database with initial data"
+    cmds:
+      - npm run prisma:seed
+
+  db:studio:
+    desc: "Open Prisma Studio"
+    cmds:
+      - npm run prisma:studio
+
+  db:reset:
+    desc: "Reset database (DANGEROUS - destroys all data)"
+    prompt: "This will destroy all data. Are you sure?"
+    cmds:
+      - npx prisma migrate reset --schema=./commons/prisma/schema.prisma
+
+  # ============================================================================
+  # Docker
+  # ============================================================================
+  docker:build:
+    desc: "Build all Docker images"
+    cmds:
+      - docker buildx bake
+
+  docker:build:bot:
+    desc: "Build bot Docker image locally"
+    cmds:
+      - docker buildx bake bot-local
+
+  docker:build:api:
+    desc: "Build API Docker image locally"
+    cmds:
+      - docker buildx bake api-local
+
+  docker:build:dashboard:
+    desc: "Build dashboard Docker image locally"
+    cmds:
+      - docker buildx bake dashboard-local
+
+  docker:push:
+    desc: "Build and push all Docker images"
+    vars:
+      TAG: '{{.TAG | default "latest"}}'
+    cmds:
+      - docker buildx bake --push --set "*.tags={{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.TAG}}"
+
+  # ============================================================================
+  # Helm
+  # ============================================================================
+  helm:deps:
+    desc: "Update Helm chart dependencies"
+    dir: chart/{{.APP_NAME}}
+    cmds:
+      - helm dependency update
+
+  helm:lint:
+    desc: "Lint Helm chart"
+    cmds:
+      - helm lint chart/{{.APP_NAME}} -f chart/{{.APP_NAME}}/base/values.yaml
+
+  helm:template:
+    desc: "Template Helm chart (dry-run)"
+    vars:
+      ENV: '{{.ENV | default "dev"}}'
+    cmds:
+      - helm template {{.APP_NAME}} chart/{{.APP_NAME}} -f chart/{{.APP_NAME}}/base/values.yaml -f chart/{{.APP_NAME}}/{{.ENV}}/values.yaml
+
+  helm:install:dev:
+    desc: "Install Helm chart to development"
+    cmds:
+      - helm upgrade --install {{.APP_NAME}} chart/{{.APP_NAME}} -f chart/{{.APP_NAME}}/base/values.yaml -f chart/{{.APP_NAME}}/dev/values.yaml -n {{.APP_NAME}}-dev --create-namespace
+
+  helm:install:staging:
+    desc: "Install Helm chart to staging"
+    cmds:
+      - helm upgrade --install {{.APP_NAME}} chart/{{.APP_NAME}} -f chart/{{.APP_NAME}}/base/values.yaml -f chart/{{.APP_NAME}}/staging/values.yaml -n {{.APP_NAME}}-staging --create-namespace
+
+  helm:install:prod:
+    desc: "Install Helm chart to production"
+    prompt: "Deploy to production?"
+    cmds:
+      - helm upgrade --install {{.APP_NAME}} chart/{{.APP_NAME}} -f chart/{{.APP_NAME}}/base/values.yaml -f chart/{{.APP_NAME}}/prod/values.yaml -n {{.APP_NAME}} --create-namespace
+
+  helm:uninstall:
+    desc: "Uninstall Helm chart"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - helm uninstall {{.APP_NAME}} -n {{.NAMESPACE}}
+
+  helm:package:
+    desc: "Package Helm chart"
+    cmds:
+      - helm package chart/{{.APP_NAME}} -d chart-tmp/
+
+  # ============================================================================
+  # Flux GitOps
+  # ============================================================================
+  flux:reconcile:dev:
+    desc: "Force Flux reconciliation for dev"
+    cmds:
+      - flux reconcile helmrelease {{.APP_NAME}} -n {{.APP_NAME}}-dev
+
+  flux:reconcile:staging:
+    desc: "Force Flux reconciliation for staging"
+    cmds:
+      - flux reconcile helmrelease {{.APP_NAME}} -n {{.APP_NAME}}-staging
+
+  flux:reconcile:prod:
+    desc: "Force Flux reconciliation for production"
+    cmds:
+      - flux reconcile helmrelease {{.APP_NAME}} -n {{.APP_NAME}}
+
+  flux:status:
+    desc: "Check Flux status for all environments"
+    cmds:
+      - flux get helmrelease -A | grep {{.APP_NAME}}
+
+  flux:logs:
+    desc: "View Flux controller logs"
+    cmds:
+      - kubectl logs -n flux-system deploy/helm-controller -f
+
+  flux:suspend:prod:
+    desc: "Suspend production deployments"
+    cmds:
+      - flux suspend helmrelease {{.APP_NAME}} -n {{.APP_NAME}}
+
+  flux:resume:prod:
+    desc: "Resume production deployments"
+    cmds:
+      - flux resume helmrelease {{.APP_NAME}} -n {{.APP_NAME}}
+
+  # ============================================================================
+  # GCP Setup
+  # ============================================================================
+  gcp:auth:
+    desc: "Authenticate with GCP"
+    cmds:
+      - gcloud auth login
+      - gcloud auth configure-docker {{.DOCKER_REGISTRY | replace "/" " " | split " " | first}}
+
+  gcp:setup-sa:
+    desc: "Create GCP service account for workload identity"
+    vars:
+      SA_NAME: "{{.APP_NAME}}"
+    cmds:
+      - gcloud iam service-accounts create {{.SA_NAME}} --display-name="{{.APP_NAME}} Service Account" --project={{.GCP_PROJECT}}
+      - gcloud projects add-iam-policy-binding {{.GCP_PROJECT}} --member="serviceAccount:{{.SA_NAME}}@{{.GCP_PROJECT}}.iam.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
+
+  gcp:setup-secrets:
+    desc: "Create secrets in Google Secret Manager"
+    cmds:
+      - echo "Creating secrets in GSM..."
+      - gcloud secrets create {{.APP_NAME}}-discord-token --project={{.GCP_PROJECT}} --replication-policy=automatic || true
+      - gcloud secrets create {{.APP_NAME}}-database-url --project={{.GCP_PROJECT}} --replication-policy=automatic || true
+      - gcloud secrets create {{.APP_NAME}}-api-key --project={{.GCP_PROJECT}} --replication-policy=automatic || true
+      - echo "Secrets created. Add values with: gcloud secrets versions add <secret-name> --data-file=-"
+
+  # ============================================================================
+  # Kubernetes
+  # ============================================================================
+  k8s:context:
+    desc: "Get current Kubernetes context"
+    cmds:
+      - kubectl config current-context
+
+  k8s:pods:
+    desc: "List pods in namespace"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - kubectl get pods -n {{.NAMESPACE}}
+
+  k8s:logs:
+    desc: "View logs for bot deployment"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - kubectl logs -n {{.NAMESPACE}} -l app.kubernetes.io/component=bot -f
+
+  k8s:logs:api:
+    desc: "View logs for API deployment"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - kubectl logs -n {{.NAMESPACE}} -l app.kubernetes.io/component=api -f
+
+  k8s:exec:
+    desc: "Exec into bot pod"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - kubectl exec -it -n {{.NAMESPACE}} $(kubectl get pod -n {{.NAMESPACE}} -l app.kubernetes.io/component=bot -o jsonpath="{.items[0].metadata.name}") -- /bin/sh
+
+  k8s:port-forward:
+    desc: "Port forward to bot health endpoint"
+    vars:
+      NAMESPACE: '{{.NAMESPACE | default .APP_NAME}}'
+    cmds:
+      - kubectl port-forward -n {{.NAMESPACE}} svc/{{.APP_NAME}} 3000:3000
+
+  # ============================================================================
+  # Release
+  # ============================================================================
+  release:
+    desc: "Run semantic release (CI only)"
+    cmds:
+      - npm run release
+
+  release:dry-run:
+    desc: "Dry run semantic release"
+    cmds:
+      - npx semantic-release --dry-run
+
+  # ============================================================================
+  # Cleanup
+  # ============================================================================
+  clean:
+    desc: "Clean build artifacts and dependencies"
+    cmds:
+      - rm -rf node_modules
+      - rm -rf commons/node_modules
+      - rm -rf api-service/node_modules
+      - rm -rf dashboard/node_modules dashboard/.next
+      - rm -rf chart-tmp
+
+  clean:docker:
+    desc: "Remove local Docker images"
+    cmds:
+      - docker rmi $(docker images -q {{.APP_NAME}}*) 2>/dev/null || true
