@@ -1,0 +1,43 @@
+{
+  "name": "{{APP_TITLE}} Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "helm": "3.14",
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-contrib/features/go-task:1": {}
+  },
+  "postCreateCommand": "npm install && cd commons && npm install && cd ../api-service && npm install && cd ../dashboard && npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "GitHub.copilot"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+  "forwardPorts": [3000, 3001, 3002, 5432, 6379],
+  "portsAttributes": {
+    "3000": { "label": "Bot Health" },
+    "3001": { "label": "API Service" },
+    "3002": { "label": "Dashboard" },
+    "5432": { "label": "PostgreSQL" },
+    "6379": { "label": "Redis" }
+  }
+}
