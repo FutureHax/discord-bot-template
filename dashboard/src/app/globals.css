@@ -1,0 +1,30 @@
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5865f2;
+}
+
+/* Selection */
+::selection {
+  background: #5865f2;
+  color: white;
+}
+
+/* Focus outline */
+*:focus-visible {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
+}
