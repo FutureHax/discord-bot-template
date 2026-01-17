@@ -71,7 +71,7 @@ jobs:
           service_account: "github-actions@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com"
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGISTRY | replace('/', ' ') | split(' ') | first }} --quiet
@@ -136,7 +136,7 @@ jobs:
           service_account: "github-actions@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com"
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGISTRY | replace('/', ' ') | split(' ') | first }} --quiet
