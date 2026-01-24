@@ -24,7 +24,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "prisma": "^6.9.0",
+    "prisma": "^7.3.0",
     "prisma-field-encryption": "^1.6.1"
   },
   "prisma": {
