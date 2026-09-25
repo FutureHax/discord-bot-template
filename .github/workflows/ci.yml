@@ -146,6 +146,7 @@ jobs:
 
       - name: Semantic Release
         env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_REGISTRY: ${{ env.REGISTRY }}
           APP_NAME: ${{ env.APP_NAME }}
