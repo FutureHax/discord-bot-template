@@ -176,6 +176,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Materialize template tokens
+        run: |
+          git grep -l -e '{{APP_NAME}}' -e '{{APP_TITLE}}' -e '{{GITHUB_ORG}}' \
+            | xargs -r sed -i \
+              -e 's/{{APP_NAME}}/discord-bot-template/g' \
+              -e 's/{{APP_TITLE}}/Discord Bot Template/g' \
+              -e 's/{{GITHUB_ORG}}/FutureHax/g'
+
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
