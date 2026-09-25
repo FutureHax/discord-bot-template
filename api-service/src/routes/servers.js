@@ -81,7 +81,7 @@ router.get('/:discordId', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    const { discordId, name, memberCount, ownerId } = req.body;
+    const { discordId, name, memberCount } = req.body;
 
     if (!discordId || !name) {
       return res.status(400).json({

@@ -2,7 +2,7 @@
  * {{APP_TITLE}} - Discord Bot Service
  * Main entry point for the Discord bot
  */
-const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const express = require('express');
 const { config, logger: baseLogger, db, redis } = require('@{{APP_NAME}}/commons');
 
@@ -145,7 +145,7 @@ process.on('uncaughtException', (error) => {
   shutdown('uncaughtException');
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled rejection', { reason: String(reason) });
 });
 

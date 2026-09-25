@@ -59,7 +59,8 @@ export default function DashboardPage() {
               </Heading>
             </HStack>
             <Spacer />
-            <Button colorScheme="brand" leftIcon={<FaDiscord />}>
+            <Button colorScheme="brand">
+              <FaDiscord />
               Login with Discord
             </Button>
           </Flex>

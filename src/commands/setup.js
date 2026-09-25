@@ -2,9 +2,7 @@
  * Setup command - configure bot settings for the server
  */
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const { db, logger: baseLogger } = require('@{{APP_NAME}}/commons');
-
-const logger = baseLogger.createLogger('commands');
+const { db } = require('@{{APP_NAME}}/commons');
 
 module.exports = {
   data: new SlashCommandBuilder()

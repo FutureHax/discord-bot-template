@@ -26,14 +26,21 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+
+      - name: Materialize template tokens
+        run: |
+          git grep -l -e '{{APP_NAME}}' -e '{{APP_TITLE}}' -e '{{GITHUB_ORG}}' \
+            | xargs -r sed -i \
+              -e 's/{{APP_NAME}}/discord-bot-template/g' \
+              -e 's/{{APP_TITLE}}/Discord Bot Template/g' \
+              -e 's/{{GITHUB_ORG}}/FutureHax/g'
 
       - name: Install dependencies
         run: |
-          npm ci
-          cd commons && npm ci
-          cd ../api-service && npm ci
-          cd ../dashboard && npm ci
+          npm install
+          cd commons && npm install
+          cd ../api-service && npm install
+          cd ../dashboard && npm install
 
       - name: Generate Prisma client
         run: npm run prisma:generate
@@ -74,7 +81,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{ env.REGISTRY | replace('/', ' ') | split(' ') | first }} --quiet
+        run: gcloud auth configure-docker "${REGISTRY%%/*}" --quiet
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -124,10 +131,17 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+
+      - name: Materialize template tokens
+        run: |
+          git grep -l -e '{{APP_NAME}}' -e '{{APP_TITLE}}' -e '{{GITHUB_ORG}}' \
+            | xargs -r sed -i \
+              -e 's/{{APP_NAME}}/discord-bot-template/g' \
+              -e 's/{{APP_TITLE}}/Discord Bot Template/g' \
+              -e 's/{{GITHUB_ORG}}/FutureHax/g'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -139,7 +153,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        run: gcloud auth configure-docker ${{ env.REGISTRY | replace('/', ' ') | split(' ') | first }} --quiet
+        run: gcloud auth configure-docker "${REGISTRY%%/*}" --quiet
 
       - name: Setup Helm
         uses: azure/setup-helm@v4
