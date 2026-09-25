@@ -61,7 +61,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: lint-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(env.REGISTRY, '{{') && !contains(env.APP_NAME, '{{')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(env.REGISTRY, 'DOCKER_REGISTRY') && !contains(env.APP_NAME, 'APP_NAME')
     permissions:
       contents: read
       id-token: write
@@ -114,7 +114,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(env.REGISTRY, '{{') && !contains(env.APP_NAME, '{{')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(env.REGISTRY, 'DOCKER_REGISTRY') && !contains(env.APP_NAME, 'APP_NAME')
     permissions:
       contents: write
       issues: write
